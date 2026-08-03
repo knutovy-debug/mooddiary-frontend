@@ -22,41 +22,38 @@ function App() {
   };
 
   const handleAuth = async () => {
-  setError('');
-  const url = isLogin
-    ? https://mooddiary-backend.onrender.com/api/v1/auth/login
-    : https://mooddiary-backend.onrender.com/api/v1/auth/register;
-
-  try {
-    const res = await axios.post(url, { email, password });
-    if (isLogin) {
-      const token = res.data.access_token;
-      if (!token) throw new Error('Токен не получен');
-      setToken(token);
-      localStorage.setItem('token', token);
-      alert('Успешный вход!');
-    } else {
-      alert('Регистрация успешна! Теперь войдите.');
-      setIsLogin(true);
-    }
-  } catch (err: any) {
-    console.error('Ошибка:', err);
-    let msg = 'Неизвестная ошибка';
-    if (err.response?.data?.detail) {
-      const detail = err.response.data.detail;
-      if (typeof detail === 'string') {
-        msg = detail;
-      } else if (Array.isArray(detail)) {
-        msg = detail.map((d: any) => d.msg).join(', ');
+    setError('');
+    const url = isLogin
+      ? https://mooddiary-backend.onrender.com/api/v1/auth/login
+      : https://mooddiary-backend.onrender.com/api/v1/auth/register;
+    try {
+      const res = await axios.post(url, { email, password });
+      if (isLogin) {
+        const token = res.data.access_token;
+        if (!token) throw new Error('Токен не получен');
+        setToken(token);
+        localStorage.setItem('token', token);
+        alert('Успешный вход!');
       } else {
-        msg = JSON.stringify(detail);
+        alert('Регистрация успешна! Теперь войдите.');
+        setIsLogin(true);
       }
-    } else if (err.message) {
-      msg = err.message;
-    }
-    setError(msg);
-  }
-};
+    } catch (err: any) {
+      console.error('Ошибка:', err);
+      let msg = 'Неизвестная ошибка';
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === 'string') {
+          msg = detail;
+        } else if (Array.isArray(detail)) {
+          msg = detail.map((d: any) => d.msg).join(', ');
+        } else {
+          msg = JSON.stringify(detail);
+        }
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setError(msg);
     }
   };
 
@@ -66,14 +63,14 @@ function App() {
     setResult(null);
     setError('');
     try {
-      const response = await axios.get('http://mooddiary-backend.onrender.com', {
+      const response = await axios.get(https://mooddiary-backend.onrender.com/api/v1/analyze, {
         params: { text, lang: i18n.language },
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);
     } catch (err: any) {
       console.error('Ошибка:', err);
-      let msg = t('error') || 'Ошибка запроса';
+      let msg = 'Ошибка запроса';
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail;
         if (typeof detail === 'string') {
@@ -209,7 +206,7 @@ function App() {
                   )}
 
                   {result && (
-                    <div className={`mt-6 p-5 rounded-xl border shadow-md animate-fadeInUp ${getResultBg()}`}>
+                    <div className={mt-6 p-5 rounded-xl border shadow-md animate-fadeInUp ${getResultBg()}}>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">🧠</span>
                         <h3 className="text-lg font-semibold text-gray-800">{t('result')}</h3>
