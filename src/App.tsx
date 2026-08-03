@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState } from react;
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
 
 function App() {
-  const [email, setEmail] = useState('');
+  const [email,setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [isLogin, setIsLogin] = useState(true);
