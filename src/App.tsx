@@ -1,4 +1,4 @@
-import React, { useState } from react;
+import React, { useState } from `react`;
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
 import History from './History';
@@ -29,8 +29,7 @@ function App() {
         alert('Успешный вход!');
       } else {
         alert('Регистрация успешна! Теперь войдите.');
-        setIsLogin(true);
-      }
+        setIsLogin(true);}
     } catch (err: any) {
       console.error('Ошибка:', err);
       let msg = 'Неизвестная ошибка';
