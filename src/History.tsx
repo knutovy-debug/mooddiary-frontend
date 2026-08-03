@@ -6,7 +6,7 @@ interface Entry {
   text: string;
   sentiment: string;
   stress_level: number;
-  topics: string;   // <--- теперь строка, а не массив
+  topics: string;
   recommendation: string;
   created_at: string;
 }
@@ -25,7 +25,7 @@ function History() {
         return;
       }
       try {
-        const response = await axios.get('http://mooddiary-backend.onrender.com', {
+        const response = await axios.get('https://mooddiary-backend.onrender.com/api/v1/entries/my', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setEntries(response.data);

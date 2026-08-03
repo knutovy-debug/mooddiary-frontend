@@ -26,7 +26,7 @@ function Stats() {
         return;
       }
       try {
-        const response = await axios.get('http://mooddiary-backend.onrender.com', {
+        const response = await axios.get('https://mooddiary-backend.onrender.com/api/v1/entries/stats', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setData(response.data);
