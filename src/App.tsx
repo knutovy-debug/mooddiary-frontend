@@ -193,7 +193,7 @@ function App() {
                   )}
 
                   {result && (
-                    <div className={mt-6 p-5 rounded-xl border shadow-md animate-fadeInUp ${getResultBg()}}>
+                    <div className={`mt-6 p-5 rounded-xl border shadow-md animate-fadeInUp ${getResultBg()}`}>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">🧠</span>
                         <h3 className="text-lg font-semibold text-gray-800">Результат анализа</h3>
