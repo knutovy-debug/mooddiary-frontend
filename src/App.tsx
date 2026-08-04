@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
 
+const API_URL = 'https://mooddiary-backend.onrender.com';
+
 function App() {
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -14,11 +18,16 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem('lang', lang);
+  };
+
   const handleAuth = async () => {
     setError('');
     const url = isLogin
-      ? 'https://mooddiary-backend.onrender.com/api/v1/auth/login'
-      : 'https://mooddiary-backend.onrender.com/api/v1/auth/register';
+      ? `${API_URL}/api/v1/auth/login`
+      : `${API_URL}/api/v1/auth/register`;
     try {
       const res = await axios.post(url, { email, password });
       if (isLogin) {
@@ -26,23 +35,19 @@ function App() {
         if (!token) throw new Error('Токен не получен');
         setToken(token);
         localStorage.setItem('token', token);
-        alert('Успешный вход!');
+        alert(t('login_success') || 'Успешный вход!');
       } else {
-        alert('Регистрация успешна! Теперь войдите.');
+        alert(t('register_success') || 'Регистрация успешна! Теперь войдите.');
         setIsLogin(true);
       }
     } catch (err: any) {
       console.error('Ошибка:', err);
-      let msg = 'Неизвестная ошибка';
+      let msg = t('unknown_error') || 'Неизвестная ошибка';
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail;
-        if (typeof detail === 'string') {
-          msg = detail;
-        } else if (Array.isArray(detail)) {
-          msg = detail.map((d: any) => d.msg).join(', ');
-        } else {
-          msg = JSON.stringify(detail);
-        }
+        if (typeof detail === 'string') msg = detail;
+        else if (Array.isArray(detail)) msg = detail.map((d: any) => d.msg).join(', ');
+        else msg = JSON.stringify(detail);
       } else if (err.message) {
         msg = err.message;
       }
@@ -56,26 +61,20 @@ function App() {
     setResult(null);
     setError('');
     try {
-      const response = await axios.get('https://mooddiary-backend.onrender.com/api/v1/analyze', {
-        params: { text },
+      const response = await axios.get(`${API_URL}/api/v1/analyze`, {
+        params: { text, lang: i18n.language },
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);
     } catch (err: any) {
       console.error('Ошибка:', err);
-      let msg = 'Ошибка запроса';
+      let msg = t('request_error') || 'Ошибка запроса';
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail;
-        if (typeof detail === 'string') {
-          msg = detail;
-        } else if (Array.isArray(detail)) {
-          msg = detail.map((d: any) => d.msg).join(', ');
-        } else {
-          msg = JSON.stringify(detail);
-        }
-      } else if (err.message) {
-        msg = err.message;
-      }
+        if (typeof detail === 'string') msg = detail;
+        else if (Array.isArray(detail)) msg = detail.map((d: any) => d.msg).join(', ');
+        else msg = JSON.stringify(detail);
+      } else if (err.message) msg = err.message;
       setError(msg);
     } finally {
       setLoading(false);
@@ -85,6 +84,7 @@ function App() {
   const logout = () => {
     setToken('');
     localStorage.removeItem('token');
+    window.location.reload();
   };
 
   const getResultBg = () => {
@@ -98,19 +98,23 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100 flex items-center justify-center p-6">
         <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-white/40">
+          <div className="flex justify-end gap-2 mb-4">
+            <button onClick={() => changeLanguage('ru')} className="text-sm">🇷🇺</button>
+            <button onClick={() => changeLanguage('en')} className="text-sm">🇬🇧</button>
+          </div>
           <h1 className="text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-6">
-            {isLogin ? '🔐 Вход' : '📝 Регистрация'}
+            {isLogin ? `🔐 ${t('login')}` : `📝 ${t('register')}`}
           </h1>
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t('enter_email')}
             className="w-full p-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-300 focus:border-indigo-500 transition outline-none mb-3"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           <input
             type="password"
-            placeholder="Пароль"
+            placeholder={t('enter_password')}
             className="w-full p-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-300 focus:border-indigo-500 transition outline-none mb-4"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -119,15 +123,15 @@ function App() {
             onClick={handleAuth}
             className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
           >
-            {isLogin ? 'Войти' : 'Зарегистрироваться'}
+            {isLogin ? t('login') : t('register')}
           </button>
           <p className="text-center text-sm mt-4 text-gray-600">
-            {isLogin ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
+            {isLogin ? t('no_account') : t('already_account')}
             <span
               className="text-indigo-600 font-medium cursor-pointer hover:underline"
               onClick={() => setIsLogin(!isLogin)}
             >
-              {isLogin ? 'Зарегистрируйтесь' : 'Войдите'}
+              {isLogin ? ` ${t('sign_up')}` : ` ${t('sign_in')}`}
             </span>
           </p>
           {error && <p className="text-red-500 text-center mt-3">{error}</p>}
@@ -145,19 +149,21 @@ function App() {
           </h1>
           <div className="space-x-4 flex items-center">
             <Link to="/" className="text-gray-700 hover:text-indigo-600 font-medium transition flex items-center gap-1">
-              <span>🏠</span> Главная
+              <span>🏠</span> {t('home')}
             </Link>
             <Link to="/history" className="text-gray-700 hover:text-indigo-600 font-medium transition flex items-center gap-1">
-              <span>📜</span> История
+              <span>📜</span> {t('history')}
             </Link>
             <Link to="/stats" className="text-gray-700 hover:text-indigo-600 font-medium transition flex items-center gap-1">
-              <span>📊</span> Статистика
+              <span>📊</span> {t('stats')}
             </Link>
+            <button onClick={() => changeLanguage('ru')} className="text-sm">🇷🇺</button>
+            <button onClick={() => changeLanguage('en')} className="text-sm">🇬🇧</button>
             <button
               onClick={logout}
               className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition"
             >
-              Выйти
+              {t('logout')}
             </button>
           </div>
         </nav>
@@ -170,11 +176,11 @@ function App() {
                 <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl p-8 border border-white/40">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-3xl">📝</span>
-                    <h2 className="text-2xl font-semibold text-gray-800">Как прошёл твой день?</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800">{t('how_was_day')}</h2>
                   </div>
                   <textarea
                     className="w-full h-40 p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-300 focus:border-indigo-500 transition outline-none resize-none"
-                    placeholder="Напиши всё, что чувствуешь..."
+                    placeholder={t('write_here')}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                   />
@@ -183,7 +189,7 @@ function App() {
                     disabled={loading}
                     className="w-full mt-5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50"
                   >
-                    {loading ? '⏳ Анализирую...' : '🔍 Отправить на анализ'}
+                    {loading ? t('analyzing') : t('analyze')}
                   </button>
 
                   {error && (
@@ -196,13 +202,13 @@ function App() {
                     <div className={`mt-6 p-5 rounded-xl border shadow-md animate-fadeInUp ${getResultBg()}`}>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">🧠</span>
-                        <h3 className="text-lg font-semibold text-gray-800">Результат анализа</h3>
+                        <h3 className="text-lg font-semibold text-gray-800">{t('result')}</h3>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <div><span className="font-medium">Настроение:</span> {result.sentiment}</div>
-                        <div><span className="font-medium">Стресс:</span> {result.stress_level}/10</div>
-                        <div className="col-span-2"><span className="font-medium">Темы:</span> {result.topics?.join(', ') || '—'}</div>
-                        <div className="col-span-2"><span className="font-medium">Совет:</span> {result.recommendation}</div>
+                        <div><span className="font-medium">{t('mood')}:</span> {result.sentiment}</div>
+                        <div><span className="font-medium">{t('stress')}:</span> {result.stress_level}/10</div>
+                        <div className="col-span-2"><span className="font-medium">{t('topics')}:</span> {result.topics?.join(', ') || '—'}</div>
+                        <div className="col-span-2"><span className="font-medium">{t('advice')}:</span> {result.recommendation}</div>
                       </div>
                     </div>
                   )}

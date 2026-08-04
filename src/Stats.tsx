@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, ResponsiveContainer
 } from 'recharts';
+
+const API_URL = 'https://mooddiary-backend.onrender.com';
 
 interface StatsData {
   dates: string[];
@@ -13,6 +16,7 @@ interface StatsData {
 }
 
 function Stats() {
+  const { t } = useTranslation();
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,27 +25,27 @@ function Stats() {
     const fetchStats = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Вы не авторизованы');
+        setError(t('unauthorized') || 'Вы не авторизованы');
         setLoading(false);
         return;
       }
       try {
-        const response = await axios.get('https://mooddiary-backend.onrender.com/api/v1/entries/stats', {
+        const response = await axios.get(`${API_URL}/api/v1/entries/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setData(response.data);
       } catch (err: any) {
-        setError(err.response?.data?.detail || 'Ошибка загрузки статистики');
+        setError(err.response?.data?.detail || t('error_loading') || 'Ошибка загрузки статистики');
       } finally {
         setLoading(false);
       }
     };
     fetchStats();
-  }, []);
+  }, [t]);
 
-  if (loading) return <div className="text-center p-6">⏳ Загрузка статистики...</div>;
+  if (loading) return <div className="text-center p-6">⏳ {t('loading_stats')}...</div>;
   if (error) return <div className="text-center text-red-500 p-6">{error}</div>;
-  if (!data || data.dates.length === 0) return <div className="text-center p-6">📊 Нет данных для статистики. Сделайте записи!</div>;
+  if (!data || data.dates.length === 0) return <div className="text-center p-6">📊 {t('no_data')}</div>;
 
   const chartData = data.dates.map((date, index) => ({
     date,
@@ -55,10 +59,10 @@ function Stats() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-teal-700 mb-4">📊 Статистика настроения</h2>
+      <h2 className="text-2xl font-bold text-teal-700 mb-4">📊 {t('stats_title')}</h2>
 
       <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/30 mb-6">
-        <h3 className="text-lg font-semibold mb-2">📈 Динамика настроения и стресса</h3>
+        <h3 className="text-lg font-semibold mb-2">📈 {t('mood_chart')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
@@ -66,14 +70,14 @@ function Stats() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="sentiment" stroke="#8884d8" name="Настроение (1=позитивное)" />
-            <Line type="monotone" dataKey="stress" stroke="#ff7300" name="Стресс (1-10)" />
+            <Line type="monotone" dataKey="sentiment" stroke="#8884d8" name={t('mood_label')} />
+            <Line type="monotone" dataKey="stress" stroke="#ff7300" name={t('stress_label')} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/30 mb-6">
-        <h3 className="text-lg font-semibold mb-2">📊 Уровень стресса по дням</h3>
+        <h3 className="text-lg font-semibold mb-2">📊 {t('stress_chart')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
@@ -81,16 +85,16 @@ function Stats() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="stress" fill="#ff7300" name="Стресс" />
+            <Bar dataKey="stress" fill="#ff7300" name={t('stress_label')} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/30">
-        <h3 className="text-lg font-semibold mb-2">🏷️ Частота тем</h3>
+        <h3 className="text-lg font-semibold mb-2">🏷️ {t('topics_freq')}</h3>
         <ul className="list-disc pl-5">
           {topTopics.map(([topic, count]) => (
-            <li key={topic}>{topic}: {count} раз</li>
+            <li key={topic}>{topic}: {count} {t('times')}</li>
           ))}
         </ul>
       </div>
