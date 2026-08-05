@@ -43,9 +43,9 @@ function Stats() {
     fetchStats();
   }, [t]);
 
-  if (loading) return <div className="text-center p-6">⏳ {t('loading_stats')}...</div>;
+  if (loading) return <div className="text-center p-6 text-amber-700">⏳ {t('loading_stats')}...</div>;
   if (error) return <div className="text-center text-red-500 p-6">{error}</div>;
-  if (!data || data.dates.length === 0) return <div className="text-center p-6">📊 {t('no_data')}</div>;
+  if (!data || data.dates.length === 0) return <div className="text-center p-6 text-amber-700">📊 {t('no_data')}</div>;
 
   const chartData = data.dates.map((date, index) => ({
     date,
@@ -59,40 +59,40 @@ function Stats() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-teal-700 mb-4">📊 {t('stats_title')}</h2>
+      <h2 className="text-2xl font-bold text-amber-800 mb-4">📊 {t('stats_title')}</h2>
 
-      <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/30 mb-6">
-        <h3 className="text-lg font-semibold mb-2">📈 {t('mood_chart')}</h3>
+      <div className="glass-card p-4 rounded-2xl shadow-md mb-6">
+        <h3 className="text-lg font-semibold text-amber-800 mb-2">📈 {t('mood_chart')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5d5c0" />
+            <XAxis dataKey="date" stroke="#a67c5b" />
+            <YAxis stroke="#a67c5b" />
+            <Tooltip contentStyle={{ background: '#fdf6f0', border: '1px solid #e5d5c0' }} />
             <Legend />
-            <Line type="monotone" dataKey="sentiment" stroke="#8884d8" name={t('mood_label')} />
-            <Line type="monotone" dataKey="stress" stroke="#ff7300" name={t('stress_label')} />
+            <Line type="monotone" dataKey="sentiment" stroke="#8B5CF6" name={t('mood_label')} strokeWidth={2} />
+            <Line type="monotone" dataKey="stress" stroke="#F97316" name={t('stress_label')} strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/30 mb-6">
-        <h3 className="text-lg font-semibold mb-2">📊 {t('stress_chart')}</h3>
+      <div className="glass-card p-4 rounded-2xl shadow-md mb-6">
+        <h3 className="text-lg font-semibold text-amber-800 mb-2">📊 {t('stress_chart')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5d5c0" />
+            <XAxis dataKey="date" stroke="#a67c5b" />
+            <YAxis stroke="#a67c5b" />
+            <Tooltip contentStyle={{ background: '#fdf6f0', border: '1px solid #e5d5c0' }} />
             <Legend />
-            <Bar dataKey="stress" fill="#ff7300" name={t('stress_label')} />
+            <Bar dataKey="stress" fill="#F97316" name={t('stress_label')} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-white/30">
-        <h3 className="text-lg font-semibold mb-2">🏷️ {t('topics_freq')}</h3>
-        <ul className="list-disc pl-5">
+      <div className="glass-card p-4 rounded-2xl shadow-md">
+        <h3 className="text-lg font-semibold text-amber-800 mb-2">🏷️ {t('topics_freq')}</h3>
+        <ul className="list-disc pl-5 text-amber-800">
           {topTopics.map(([topic, count]) => (
             <li key={topic}>{topic}: {count} {t('times')}</li>
           ))}

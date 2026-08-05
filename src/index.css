@@ -4,20 +4,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Глобальные стили ===== */
 body {
   font-family: 'Inter', sans-serif;
+  background: #fdf6f0;  /* Тёплый бежевый фон */
+  color: #3d2c1e; /* Тёплый тёмно-коричневый для текста */
+  min-height: 100vh;
 }
 
-@keyframes fadeInUp {
+/* ===== Анимации ===== */
+@keyframes softFadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
-.animate-fadeInUp {
-  animation: fadeInUp 0.4s ease-out;
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes gentlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-softFadeIn {
+  animation: softFadeIn 0.5s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gentlePulse {
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+
+/* ===== Компоненты ===== */
+.glass-card {
+  background: rgba(255, 248, 240, 0.75); /* Полупрозрачный тёплый фон */
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(230, 200, 180, 0.4);
+  box-shadow: 0 8px 32px rgba(180, 120, 80, 0.08); /* Мягкая тёплая тень */
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-amber-500 to-orange-400 text-white font-semibold py-3 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+}
+
+.input-primary {
+  @apply w-full p-4 border-2 border-amber-200/50 rounded-2xl focus:ring-4 focus:ring-amber-300/50 focus:border-amber-400 transition outline-none resize-none bg-white/80 text-gray-700 placeholder:text-amber-300/70;
+}
+
+/* Цвета для результата анализа */
+.card-result-positive {
+  @apply bg-gradient-to-br from-green-50 to-emerald-100/70 border-green-200/50 shadow-md;
+}
+.card-result-neutral {
+  @apply bg-gradient-to-br from-yellow-50 to-amber-100/70 border-yellow-200/50 shadow-md;
+}
+.card-result-negative {
+  @apply bg-gradient-to-br from-red-50 to-rose-100/70 border-red-200/50 shadow-md;
 }
