@@ -18,15 +18,30 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [entriesToday, setEntriesToday] = useState(0);
+  const [dailyLimit, setDailyLimit] = useState(3);
 
-  // Проверяем статус подписки при загрузке токена
+  // Проверяем статус подписки и количество записей за сегодня
   useEffect(() => {
     if (token) {
+      // Статус подписки
       axios
         .get(`${API_URL}/api/v1/subscription/status`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => setIsSubscribed(res.data.is_subscribed))
+        .catch(() => {});
+
+      // Количество записей за сегодня
+      axios
+        .get(`${API_URL}/api/v1/entries/today-count`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          setEntriesToday(res.data.count);
+          setDailyLimit(res.data.limit);
+          setIsSubscribed(res.data.is_premium);
+        })
         .catch(() => {});
     }
   }, [token]);
@@ -80,6 +95,13 @@ function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);
+      // После успешного анализа обновляем счётчик
+      const countRes = await axios.get(`${API_URL}/api/v1/entries/today-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEntriesToday(countRes.data.count);
+      setDailyLimit(countRes.data.limit);
+      setIsSubscribed(countRes.data.is_premium);
     } catch (err: any) {
       console.error('Ошибка:', err);
       let msg = 'Ошибка запроса';
@@ -178,11 +200,16 @@ function App() {
               📊 {t('stats')}
             </Link>
 
+            {/* Счётчик записей */}
+            <span className="text-sm text-gray-500">
+              📝 {entriesToday} / {dailyLimit === 999 ? '∞' : dailyLimit}
+            </span>
+
             {/* Статус подписки */}
             {isSubscribed ? (
               <span className="text-green-600 font-semibold">⭐ Премиум</span>
             ) : (
-              <span className="text-amber-600">🔓 Бесплатный (3/день)</span>
+              <span className="text-amber-600">🔓 Бесплатный</span>
             )}
 
             {/* Кнопка покупки подписки */}
