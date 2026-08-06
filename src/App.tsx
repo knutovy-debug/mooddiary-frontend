@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -18,6 +18,25 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // --- НОВЫЕ СОСТОЯНИЯ ДЛЯ ПОДПИСКИ ---
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [entriesToday, setEntriesToday] = useState(0);
+  const [dailyLimit] = useState(3);
+
+  // --- ЗАПРОС СТАТУСА ПОДПИСКИ ПРИ ЗАГРУЗКЕ ---
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_URL}/api/v1/subscription/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+        setIsSubscribed(res.data.is_subscribed);
+      })
+      .catch(() => {});
+    }
+  }, [token]);
+
+  // --- ОСТАЛЬНЫЕ ФУНКЦИИ (handleAuth, handleAnalyze, logout, changeLanguage) ---
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('lang', lang);
@@ -56,23 +75,30 @@ function App() {
   };
 
   const handleAnalyze = async () => {
-  if (!text.trim()) return;
-  setLoading(true);
-  setResult(null);
-  setError('');
-  try {
-    const response = await axios.get(`${API_URL}/api/v1/analyze`, {
-      params: { text, lang: i18n.language },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setResult(response.data);
-  } catch (err: any) {
-    console.error('Ошибка:', err);
-    setError(err.message || 'Ошибка запроса');
-  } finally {
-    setLoading(false);
-  }
-};
+    if (!text.trim()) return;
+    setLoading(true);
+    setResult(null);
+    setError('');
+    try {
+      const response = await axios.get(`${API_URL}/api/v1/analyze`, {
+        params: { text, lang: i18n.language },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setResult(response.data);
+    } catch (err: any) {
+      console.error('Ошибка:', err);
+      let msg = t('request_error') || 'Ошибка запроса';
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === 'string') msg = detail;
+        else if (Array.isArray(detail)) msg = detail.map((d: any) => d.msg).join(', ');
+        else msg = JSON.stringify(detail);
+      } else if (err.message) msg = err.message;
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const logout = () => {
     setToken('');
@@ -135,13 +161,32 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen" style={{ background: '#fdf6f0' }}>
-        {/* Навигация */}
+        {/* НАВИГАЦИЯ */}
         <nav className="glass-card p-4 flex flex-wrap justify-between items-center border-b border-amber-200/30">
           <h1 className="text-2xl font-bold text-amber-800">🧠 MoodDiary</h1>
+          
           <div className="flex items-center gap-3 flex-wrap">
             <Link to="/" className="text-amber-700 hover:text-amber-900 font-medium transition">{t('home')}</Link>
             <Link to="/history" className="text-amber-700 hover:text-amber-900 font-medium transition">{t('history')}</Link>
             <Link to="/stats" className="text-amber-700 hover:text-amber-900 font-medium transition">{t('stats')}</Link>
+            
+            {/* --- СТАТУС ПОДПИСКИ (НОВОЕ) --- */}
+            <div className="flex items-center gap-2">
+              {isSubscribed ? (
+                <span className="text-green-600 font-semibold">⭐ Премиум</span>
+              ) : (
+                <span className="text-amber-600 text-sm">🔓 {dailyLimit - entriesToday} записей</span>
+              )}
+              <a 
+                href="https://t.me/mooddiary_payment_bot" 
+                target="_blank" 
+                className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm"
+              >
+                Купить подписку
+              </a>
+            </div>
+            {/* --- КОНЕЦ СТАТУСА ПОДПИСКИ --- */}
+
             <button onClick={() => changeLanguage('ru')} className="text-sm hover:scale-110 transition">🇷🇺</button>
             <button onClick={() => changeLanguage('en')} className="text-sm hover:scale-110 transition">🇬🇧</button>
             <button onClick={logout} className="bg-amber-200/50 text-amber-800 px-4 py-2 rounded-full hover:bg-amber-300/50 transition">
@@ -150,7 +195,7 @@ function App() {
           </div>
         </nav>
 
-        {/* Основной контент */}
+        {/* ОСНОВНОЙ КОНТЕНТ */}
         <div className="max-w-3xl mx-auto p-6">
           <Routes>
             <Route path="/" element={
