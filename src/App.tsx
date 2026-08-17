@@ -215,7 +215,7 @@ function App() {
             {/* Кнопка покупки подписки */}
             {!isSubscribed && (
               <a
-                href="https://t.me/mooddiary_payment_bot"
+                href="https://t.me/mooddiary_pay_bot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm"
