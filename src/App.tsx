@@ -17,7 +17,7 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const [entriesToday, setEntriesToday] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(3);
 
@@ -213,16 +213,23 @@ function App() {
             )}
 
             {/* Кнопка покупки подписки */}
-            {!isSubscribed && (
-              <a
-  href="ССЫЛКА_НА_ТВОЙ_БАНК"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm"
->
-  💳 Оплатить подписку
-<img src="/qr-code.png" alt="Оплата по QR-коду" className="w-48 h-48" />
-            )}
+      {!isSubscribed && (
+        <div className="flex flex-col items-center gap-4 mt-4">
+          <button
+            onClick={() => setShowQR(!showQR)}
+            className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm"
+          >
+            💳 Оплатить по QR-коду
+          </button>
+
+          {showQR && (
+            <div className="text-center">
+              <img src="/qr-code.png" alt="Оплата по QR-коду" className="w-48 h-48" />
+              <p className="text-sm text-gray-500 mt-2">Отсканируйте QR-код в приложении банка</p>
+            </div>
+          )}
+        </div>
+      )}
 
             <button onClick={() => changeLanguage('ru')} className="text-sm">🇷🇺</button>
             <button onClick={() => changeLanguage('en')} className="text-sm">🇬🇧</button>
