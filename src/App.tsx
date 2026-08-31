@@ -215,13 +215,13 @@ function App() {
             {/* Кнопка покупки подписки */}
             {!isSubscribed && (
               <a
-  href="https://t.me/mooddiary_pay_bot"
+  href="ССЫЛКА_НА_ТВОЙ_БАНК"
   target="_blank"
   rel="noopener noreferrer"
   className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm"
 >
-  Купить подписку
-</a>
+  💳 Оплатить подписку
+<img src="/qr-code.png" alt="Оплата по QR-коду" className="w-48 h-48" />
             )}
 
             <button onClick={() => changeLanguage('ru')} className="text-sm">🇷🇺</button>
