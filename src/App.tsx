@@ -212,22 +212,18 @@ function App() {
               <span className="text-amber-600">🔓 Бесплатный</span>
             )}
 
-            {/* Кнопка покупки подписки */}
+            {/* Оплата по QR-коду */}
       {!isSubscribed && (
-        <div className="flex flex-col items-center gap-4 mt-4">
-          <button
-            onClick={() => setShowQR(!showQR)}
-            className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm"
-          >
-            💳 Оплатить по QR-коду
-          </button>
-
-          {showQR && (
-            <div className="text-center">
-              <img src="/qr-code.png" alt="Оплата по QR-коду" className="w-48 h-48" />
-              <p className="text-sm text-gray-500 mt-2">Отсканируйте QR-код в приложении банка</p>
-            </div>
-          )}
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <span className="text-gray-700 text-sm">Подписка: 299 ₽ / месяц</span>
+          <img
+            src="/qr-code.png"
+            alt="QR-код для оплаты"
+            className="w-48 h-48 border-2 border-gray-300 rounded-lg p-2"
+          />
+          <span className="text-gray-500 text-xs text-center">
+            Отсканируйте QR-код в приложении банка
+          </span>
         </div>
       )}
 
