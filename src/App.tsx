@@ -5,7 +5,7 @@ import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
 
-const API_URL = 'https://mooddiary-frontend-zeta.vercel.app';
+const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
 
 function App() {
   const { t, i18n } = useTranslation();
