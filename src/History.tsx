@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
-const API_URL = 'https://mooddiary-backend.onrender.com';
+const API_URL = 'web-production-e70f0c.up.railway.app';
 
 interface Entry {
   id: number;

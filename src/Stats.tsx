@@ -6,7 +6,7 @@ import {
   BarChart, Bar, ResponsiveContainer
 } from 'recharts';
 
-const API_URL = 'https://mooddiary-backend.onrender.com';
+const API_URL = 'web-production-e70f0c.up.railway.app';
 
 interface StatsData {
   dates: string[];
