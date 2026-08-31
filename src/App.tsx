@@ -20,7 +20,7 @@ function App() {
   const [showQR, setShowQR] = useState(false);
   const [entriesToday, setEntriesToday] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(3);
-
+  const [isSubscribed, setIsSubscribed] = useState(false);
   // Проверяем статус подписки и количество записей за сегодня
   useEffect(() => {
     if (token) {
