@@ -22,10 +22,9 @@ function App() {
   const [dailyLimit, setDailyLimit] = useState(3);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [entriesCount, setEntriesCount] = useState(0);
-  // Проверяем статус подписки и количество записей за сегодня
+
   useEffect(() => {
     if (token) {
-      // Статус подписки
       axios
         .get(`${API_URL}/api/v1/subscription/status`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -33,7 +32,6 @@ function App() {
         .then((res) => setIsSubscribed(res.data.is_subscribed))
         .catch(() => {});
 
-      // Количество записей за сегодня
       axios
         .get(`${API_URL}/api/v1/entries/today-count`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -58,11 +56,6 @@ function App() {
       ? `${API_URL}/api/v1/auth/login`
       : `${API_URL}/api/v1/auth/register`;
     try {
-      // Если пользователь записал уже 3 записи и не купил подписку - показываем оплату
-      if (entriesToday >= 3 && !isSubscribed) {
-        setShowQR(true); // Показываем QR-код
-        return;         // Прерываем отправку, не даём создать запись
-      }
       const res = await axios.post(url, { email, password });
       if (isLogin) {
         const token = res.data.access_token;
@@ -95,13 +88,21 @@ function App() {
     setLoading(true);
     setResult(null);
     setError('');
+    
+    // БЛОКИРОВКА: если использованы 3 бесплатные записи и нет подписки - показываем QR
+    if (entriesToday >= 3 && !isSubscribed) {
+      setShowQR(true);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.get(`${API_URL}/api/v1/analyze`, {
         params: { text, lang: i18n.language },
         headers: { Authorization: `Bearer ${token}` },
       });
       setResult(response.data);
-      // После успешного анализа обновляем счётчик
+      
       const countRes = await axios.get(`${API_URL}/api/v1/entries/today-count`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -139,7 +140,6 @@ function App() {
     return 'bg-yellow-50 border-yellow-200';
   };
 
-  // Форма входа/регистрации
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100 flex items-center justify-center p-6">
@@ -186,7 +186,6 @@ function App() {
     );
   }
 
-  // Главный интерфейс (после входа)
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -206,65 +205,15 @@ function App() {
               📊 {t('stats')}
             </Link>
 
-            {/* Счётчик записей */}
             <span className="text-sm text-gray-500">
               📝 {entriesToday} / {dailyLimit === 999 ? '∞' : dailyLimit}
             </span>
 
-            {/* Статус подписки */}
             {isSubscribed ? (
               <span className="text-green-600 font-semibold">⭐ Премиум</span>
             ) : (
               <span className="text-amber-600">🔓 Бесплатный</span>
             )}
-
-            {/* Оплата по QR-коду */}
-      {!isSubscribed && (
-        <div className="flex flex-col items-center gap-2 mt-4">
-          <span className="text-gray-700 text-sm">Подписка: 299 ₽ / месяц</span>
-          <img
-            src="/qr-code.png"
-            alt="QR-код для оплаты"
-            className="w-48 h-48 border-2 border-gray-300 rounded-lg p-2"
-          />
-          <span className="text-gray-500 text-xs text-center">
-            Отсканируйте QR-код в приложении банка
-          </span>
-        </div>
-      )}
-{/* Оплата по QR-коду */}
-      {showQR && (
-        <div className="flex flex-col items-center gap-2 mt-4">
-          <span className="text-sm text-gray-700 font-medium">
-            Вы использовали 3 бесплатные записи!
-          </span>
-          <span className="text-gray-700 text-sm">Продолжите, оплатив подписку: 99 ₽ / месяц</span>
-          <img
-            src="/qr-code.png"
-            alt="QR-код для оплаты"
-            className="w-48 h-48 border-2 border-gray-300 rounded-lg p-2"
-          />
-          <span className="text-gray-500 text-xs text-center">
-            Отсканируйте QR-код в приложении банка
-          </span>
-        </div>
-      )}
-{showQR && (
-        <div className="flex flex-col items-center gap-2 mt-4">
-          <span className="text-sm text-gray-700 font-medium">
-            Вы использовали 3 бесплатные записи!
-          </span>
-          <span className="text-gray-700 text-sm">Продолжите, оплатив подписку: 99 ₽ / месяц</span>
-          <img
-            src="/qr-code.png"
-            alt="QR-код для оплаты"
-            className="w-48 h-48 border-2 border-gray-300 rounded-lg p-2"
-          />
-          <span className="text-gray-500 text-xs text-center">
-            Отсканируйте QR-код в приложении банка
-          </span>
-        </div>
-      )}
 
             <button onClick={() => changeLanguage('ru')} className="text-sm">🇷🇺</button>
             <button onClick={() => changeLanguage('en')} className="text-sm">🇬🇧</button>
@@ -279,6 +228,30 @@ function App() {
         </nav>
 
         <div className="max-w-3xl mx-auto p-6">
+          {/* БЛОК С QR-КОДОМ (показывается только когда showQR = true) */}
+          {showQR && !isSubscribed && (
+            <div className="bg-white border-2 border-amber-300 rounded-3xl p-6 mb-6 text-center shadow-lg">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                🚀 Лимит использован!
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Вы использовали {entriesToday} из {dailyLimit} бесплатных записей.
+                Продолжите с подпиской!
+              </p>
+              <span className="block text-gray-800 font-bold text-lg mb-3">
+                💎 299 ₽ / месяц
+              </span>
+              <img
+                src="/qr-code.png"
+                alt="QR-код для оплаты"
+                className="w-48 h-48 mx-auto mb-3 rounded-lg border border-gray-300"
+              />
+              <span className="block text-gray-500 text-xs">
+                Отсканируйте QR-код в приложении банка. После оплаты нажмите «Выйти» и войдите снова.
+              </span>
+            </div>
+          )}
+
           <Routes>
             <Route
               path="/"
