@@ -21,6 +21,7 @@ function App() {
   const [entriesToday, setEntriesToday] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(3);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [entriesCount, setEntriesCount] = useState(0);
   // Проверяем статус подписки и количество записей за сегодня
   useEffect(() => {
     if (token) {
@@ -57,6 +58,11 @@ function App() {
       ? `${API_URL}/api/v1/auth/login`
       : `${API_URL}/api/v1/auth/register`;
     try {
+      // Если пользователь записал уже 3 записи и не купил подписку - показываем оплату
+      if (entriesToday >= 3 && !isSubscribed) {
+        setShowQR(true); // Показываем QR-код
+        return;         // Прерываем отправку, не даём создать запись
+      }
       const res = await axios.post(url, { email, password });
       if (isLogin) {
         const token = res.data.access_token;
@@ -216,6 +222,39 @@ function App() {
       {!isSubscribed && (
         <div className="flex flex-col items-center gap-2 mt-4">
           <span className="text-gray-700 text-sm">Подписка: 299 ₽ / месяц</span>
+          <img
+            src="/qr-code.png"
+            alt="QR-код для оплаты"
+            className="w-48 h-48 border-2 border-gray-300 rounded-lg p-2"
+          />
+          <span className="text-gray-500 text-xs text-center">
+            Отсканируйте QR-код в приложении банка
+          </span>
+        </div>
+      )}
+{/* Оплата по QR-коду */}
+      {showQR && (
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <span className="text-sm text-gray-700 font-medium">
+            Вы использовали 3 бесплатные записи!
+          </span>
+          <span className="text-gray-700 text-sm">Продолжите, оплатив подписку: 99 ₽ / месяц</span>
+          <img
+            src="/qr-code.png"
+            alt="QR-код для оплаты"
+            className="w-48 h-48 border-2 border-gray-300 rounded-lg p-2"
+          />
+          <span className="text-gray-500 text-xs text-center">
+            Отсканируйте QR-код в приложении банка
+          </span>
+        </div>
+      )}
+{showQR && (
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <span className="text-sm text-gray-700 font-medium">
+            Вы использовали 3 бесплатные записи!
+          </span>
+          <span className="text-gray-700 text-sm">Продолжите, оплатив подписку: 99 ₽ / месяц</span>
           <img
             src="/qr-code.png"
             alt="QR-код для оплаты"
