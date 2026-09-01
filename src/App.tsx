@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
-
+import { useNavigate } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
 
 function App() {
@@ -22,6 +22,7 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
+  const navigate = useNavigate();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Функция переключения языка
@@ -104,10 +105,15 @@ function App() {
 
   // Функция после оплаты
   const handlePaymentConfirmation = async () => {
-  // Для теста активируем подписку сразу, без проверки банка
+  // Активируем подписку и скрываем QR-код (для теста)
   setIsSubscribed(true);
   setShowQR(false);
-  alert("Спасибо! Для теста подписка активирована.");
+
+  // ВАЖНО: Возвращаем пользователя на главную страницу
+  navigate('/'); 
+
+  // Сообщение для теста
+  alert("Спасибо! Подписка активирована для теста.");
 };
 
   return (
