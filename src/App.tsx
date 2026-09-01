@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
-import { useNavigate } from 'react-router-dom';
+
 const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
 
 function App() {
@@ -22,7 +22,6 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
-  const navigate = useNavigate();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Функция переключения языка
@@ -104,6 +103,7 @@ function App() {
   };
 
   const handlePaymentConfirmation = async () => {
+  // Отправляем запрос на бэкенд, чтобы он уведомил тебя в Telegram
   try {
     await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
       headers: { Authorization: `Bearer ${token}` }
@@ -118,6 +118,9 @@ function App() {
   // Пока не подтверждено, подписка не активна
   setIsSubscribed(false);
   setShowQR(false);
+  
+  // Вместо navigate('/') используем обычный переход
+  window.location.href = '/';
 };
 
   return (
