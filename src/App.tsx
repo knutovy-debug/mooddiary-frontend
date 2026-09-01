@@ -103,17 +103,21 @@ function App() {
     }
   };
 
-  // Функция после оплаты
   const handlePaymentConfirmation = async () => {
-  // Активируем подписку и скрываем QR-код (для теста)
-  setIsSubscribed(true);
+  try {
+    await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch (error) {
+    console.error("Ошибка отправки запроса на подтверждение:", error);
+  }
+  
+  // Показываем сообщение, что запрос ушел админу
+  alert("Запрос на подтверждение отправлен! Проверьте Telegram.");
+  
+  // Пока не подтверждено, подписка не активна
+  setIsSubscribed(false);
   setShowQR(false);
-
-  // ВАЖНО: Возвращаем пользователя на главную страницу
-  navigate('/'); 
-
-  // Сообщение для теста
-  alert("Спасибо! Подписка активирована для теста.");
 };
 
   return (
