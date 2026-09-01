@@ -104,15 +104,11 @@ function App() {
 
   // Функция после оплаты
   const handlePaymentConfirmation = async () => {
-    try {
-      await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setShowSuccessMessage(true);
-    } catch (error) {
-      console.error('Ошибка отправки запроса:', error);
-    }
-  };
+  // Для теста активируем подписку сразу, без проверки банка
+  setIsSubscribed(true);
+  setShowQR(false);
+  alert("Спасибо! Для теста подписка активирована.");
+};
 
   return (
     <BrowserRouter>
