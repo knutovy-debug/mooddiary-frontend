@@ -5,13 +5,10 @@ import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
 
-// НАШ РАБОЧИЙ API (Railway)
 const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
 
 function App() {
-  const { t, i18n } = useTranslation();
-  
-  // ===== СОСТОЯНИЯ =====
+  const { i18n } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -20,202 +17,147 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // ЛИМИТ И ПОДПИСКА
   const [isSubscribed, setIsSubscribed] = useState(localStorage.getItem('isSubscribed') === 'true');
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
 
-  // ===== СМЕНА ЯЗЫКА =====
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
-
-  // ===== ПРИ ЗАГРУЗКЕ ПРОВЕРЯЕМ ЛИМИТ =====
   useEffect(() => {
     const fetchCount = async () => {
       if (!token) return;
       try {
-        const response = await axios.get(`${API_URL}/api/v1/entries/today-count`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.get(`${API_URL}/api/v1/entries/today-count`, { headers: { Authorization: `Bearer ${token}` } });
         setEntriesToday(response.data.count);
-        
-        // Если уже 3 записи и нет подписки - показываем QR
-        if (response.data.count >= 3 && !isSubscribed) {
-          setShowQR(true);
-        }
-      } catch (err) {
-        console.error("Ошибка получения количества записей:", err);
-      }
+        if (response.data.count >= 3 && !isSubscribed) setShowQR(true);
+      } catch (err) { console.error(err); }
     };
     fetchCount();
   }, [token, isSubscribed]);
 
-  // ===== ВХОД / РЕГИСТРАЦИЯ =====
+  const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
+
   const handleLogin = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const url = isLogin ? '/auth/login' : '/auth/register';
-      const response = await axios.post(`${API_URL}/api/v1${url}`, {
-        email,
-        password
-      });
+      const response = await axios.post(`${API_URL}/api/v1${url}`, { email, password });
       localStorage.setItem('token', response.data.access_token);
       setToken(response.data.access_token);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Ошибка авторизации");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { setError(err.response?.data?.detail || "Ошибка авторизации"); }
+    finally { setLoading(false); }
   };
 
-  // ===== ОТПРАВКА ЗАПИСИ =====
   const handleSubmit = async () => {
-    if (entriesToday >= 3 && !isSubscribed) {
-      setShowQR(true); // Показываем QR, если лимит исчерпан
-      return;
-    }
-
-    setLoading(true);
-    setError('');
+    if (entriesToday >= 3 && !isSubscribed) { setShowQR(true); return; }
+    setLoading(true); setError('');
     try {
-      const response = await axios.post(`${API_URL}/api/v1/entries`, {
-        text: text,
-        lang: i18n.language
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setResult(response.data);
-      setText('');
-      setEntriesToday(prev => prev + 1);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Ошибка при отправке");
-    } finally {
-      setLoading(false);
-    }
+      const response = await axios.post(`${API_URL}/api/v1/entries`, { text, lang: i18n.language }, { headers: { Authorization: `Bearer ${token}` } });
+      setResult(response.data); setText(''); setEntriesToday(prev => prev + 1);
+    } catch (err: any) { setError(err.response?.data?.detail || "Ошибка при отправке"); }
+    finally { setLoading(false); }
   };
 
-  // ===== КНОПКА "Я ОПЛАТИЛ" =====
   const handlePaymentConfirmation = async () => {
-    try {
-      // Отправляем запрос на бэкенд, чтобы он уведомил тебя в Telegram
-      await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-    } catch (error) {
-      console.error("Ошибка отправки запроса (возможно, Railway блокирует Telegram):", error);
-    }
-
-    // Локально активируем подписку, чтобы QR исчез
-    localStorage.setItem('isSubscribed', 'true');
-    setIsSubscribed(true);
-    setShowQR(false);
-
-    // Возвращаем на главную (перезагрузка страницы)
+    try { await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, { headers: { Authorization: `Bearer ${token}` } }); } catch (error) { console.error(error); }
+    localStorage.setItem('isSubscribed', 'true'); setIsSubscribed(true); setShowQR(false);
     window.location.href = '/';
   };
 
-  // ===== ВЫХОД =====
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('isSubscribed');
-    setToken('');
-    setIsSubscribed(false);
-    window.location.href = '/';
-  };
+  const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
 
-  // ===== РЕНДЕР =====
   return (
-    <BrowserRouter>
-      <nav className="flex justify-between items-center p-4 bg-white shadow-md">
-        <div className="flex gap-4">
-          <button onClick={() => changeLanguage('ru')} className="text-sm">RU</button>
-          <button onClick={() => changeLanguage('en')} className="text-sm">EN</button>
-        </div>
-        <div>
-          {token && (
-            <button onClick={logout} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition">
-              Выйти
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100">
+      <BrowserRouter>
+        {/* Навигация */}
+        <nav className="sticky top-0 z-10 bg-white/70 backdrop-blur-lg border-b border-white/40 shadow-sm">
+          <div className="max-w-4xl mx-auto p-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🧠</span>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">MoodDiary</h1>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => changeLanguage('ru')} className="px-3 py-1 bg-white rounded-full shadow-sm text-sm">RU</button>
+              <button onClick={() => changeLanguage('en')} className="px-3 py-1 bg-white rounded-full shadow-sm text-sm">EN</button>
+              {token && (
+                <button onClick={logout} className="px-3 py-1 bg-red-500 text-white rounded-full shadow-sm text-sm hover:bg-red-600">Выйти</button>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        <div className="max-w-4xl mx-auto p-6">
+          {!token ? (
+            // Экран входа
+            <div className="mt-10 bg-white/60 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-8">
+              <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">{isLogin ? 'С возвращением!' : 'Создать аккаунт'}</h2>
+              {error && <p className="text-red-500 mb-4 text-center">⚠️ {error}</p>}
+              <div className="space-y-4">
+                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} 
+                  className="w-full bg-white/70 border border-gray-200 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} 
+                  className="w-full bg-white/70 border border-gray-200 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                <button onClick={handleLogin} 
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-opacity">
+                  {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
+                </button>
+                <p onClick={() => setIsLogin(!isLogin)} className="text-blue-600 cursor-pointer text-center mt-4 hover:underline">
+                  {isLogin ? 'Нет аккаунта? Создать' : 'Уже есть аккаунт? Войти'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Дашборд
+            <div>
+              <div className="flex gap-4 mb-6">
+                <Link to="/" className="flex-1 bg-white/60 backdrop-blur-lg rounded-2xl p-4 text-center font-semibold text-gray-700 shadow-sm hover:bg-white">📝 Запись</Link>
+                <Link to="/history" className="flex-1 bg-white/60 backdrop-blur-lg rounded-2xl p-4 text-center font-semibold text-gray-700 shadow-sm hover:bg-white">📜 История</Link>
+                <Link to="/stats" className="flex-1 bg-white/60 backdrop-blur-lg rounded-2xl p-4 text-center font-semibold text-gray-700 shadow-sm hover:bg-white">📊 Статистика</Link>
+              </div>
+
+              <Routes>
+                <Route path="/" element={
+                  <div>
+                    {showQR && !isSubscribed && (
+                      <div className="mt-6 bg-white/70 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-6 text-center">
+                        <h3 className="text-xl font-bold mb-2">Лимит исчерпан</h3>
+                        <p className="text-gray-600 mb-4">Вы использовали 3 бесплатные записи. Продолжайте с подпиской!</p>
+                        <img src="/qr-code.png" alt="QR-код для оплаты" className="w-48 h-48 mx-auto mb-4 rounded-xl" />
+                        <p className="text-lg font-bold text-purple-700">299 ₽ / месяц</p>
+                        <button onClick={handlePaymentConfirmation} 
+                          className="mt-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                          ✅ Я оплатил
+                        </button>
+                      </div>
+                    )}
+
+                    {!showQR && (
+                      <div className="mt-6 bg-white/70 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-6">
+                        <h2 className="text-2xl font-bold mb-4 text-gray-800">Как прошёл твой день?</h2>
+                        <textarea value={text} onChange={(e) => setText(e.target.value)} 
+                          className="w-full bg-white border border-gray-200 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[150px]" 
+                          placeholder="Напишите, что вы чувствуете..." />
+                        <button onClick={handleSubmit} 
+                          className="mt-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                          Отправить на анализ ✨
+                        </button>
+                        
+                        {result && (
+                          <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 border border-green-200">
+                            <p className="font-bold text-green-800">Настроение: {result.sentiment}</p>
+                            <p className="text-gray-700 mt-2"><b>Совет:</b> {result.recommendation}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                } />
+                <Route path="/history" element={<History />} />
+                <Route path="/stats" element={<Stats />} />
+              </Routes>
+            </div>
           )}
         </div>
-      </nav>
-
-      <div className="max-w-3xl mx-auto p-6">
-        {!token ? (
-          // ЭКРАН ВХОДА / РЕГИСТРАЦИИ
-          <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl p-8 border border-white/40">
-            <h1 className="text-3xl font-bold mb-4">{isLogin ? 'Войти' : 'Зарегистрироваться'}</h1>
-            {error && <p className="text-red-500 mb-2">{error}</p>}
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border p-2 rounded mb-2" />
-            <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border p-2 rounded mb-2" />
-            <button onClick={handleLogin} className="w-full bg-blue-500 text-white p-2 rounded mt-2">
-              {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
-            </button>
-            <p onClick={() => setIsLogin(!isLogin)} className="text-blue-500 cursor-pointer mt-2">
-              {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
-            </p>
-          </div>
-        ) : (
-          // ГЛАВНАЯ СТРАНИЦА
-          <div>
-            <div className="flex gap-4 mb-4">
-              <Link to="/" className="bg-gray-100 p-2 rounded">Главная</Link>
-              <Link to="/history" className="bg-gray-100 p-2 rounded">История</Link>
-              <Link to="/stats" className="bg-gray-100 p-2 rounded">Статистика</Link>
-            </div>
-
-            <Routes>
-              <Route path="/" element={
-                <div>
-                  {/* Блок с QR-кодом, если лимит исчерпан */}
-                  {showQR && !isSubscribed && (
-                    <div className="mt-6 border border-gray-300 rounded-lg p-4 bg-gray-50 text-center">
-                      <h3 className="text-lg font-bold mb-2">Вы использовали 3 бесплатные записи!</h3>
-                      <p className="text-sm text-gray-600 mb-3">Оплатите подписку, чтобы продолжить</p>
-                      <img src="/qr-code.png" alt="QR-код для оплаты" className="w-48 h-48 mx-auto mb-4 rounded-lg" />
-                      <p className="text-sm font-bold text-gray-800">Подписка: 299 ₽ / месяц</p>
-                      <button
-                        onClick={handlePaymentConfirmation}
-                        className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition text-sm font-bold mt-3"
-                      >
-                        ✅ Я оплатил
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Форма записи (если есть лимит - скрываем) */}
-                  {!showQR && (
-                    <div>
-                      <h2 className="text-2xl font-bold mb-4">Как прошёл твой день?</h2>
-                      <textarea
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        className="w-full border p-2 rounded"
-                        placeholder="Напишите, что вы чувствуете..."
-                      />
-                      <button onClick={handleSubmit} className="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-sm mt-2">
-                        Отправить на анализ
-                      </button>
-                      {result && (
-                        <div className="mt-4 p-4 bg-gray-100 rounded">
-                          <p><b>Настроение:</b> {result.sentiment}</p>
-                          <p><b>Рекомендация:</b> {result.recommendation}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              } />
-              <Route path="/history" element={<History />} />
-              <Route path="/stats" element={<Stats />} />
-            </Routes>
-          </div>
-        )}
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </div>
   );
 }
 
