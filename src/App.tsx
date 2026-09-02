@@ -58,29 +58,23 @@ function App() {
   };
 
   const handlePaymentConfirmation = async () => {
+  let userId = null;
   try {
-    await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+    const response = await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    // Достаем ID пользователя из ответа сервера
+    userId = response.data.user_id;
   } catch (error) {
     console.error("Ошибка запроса на подтверждение:", error);
   }
-  
-  // НЕ активируем подписку! Просто скрываем QR и показываем "ожидание"
+
+  // Показываем окошко с ID и секретной ссылкой для активации
+  alert(`Запрос отправлен!\n\nID пользователя: ${userId}\n\nСкопируйте и вставьте в браузер эту ссылку, чтобы подтвердить оплату:\n${API_URL}/api/v1/entries/admin/activate/${userId}?secret=ADMIN_SECRET_123`);
+
+  // Скрываем QR-код и ждём подтверждения
   setShowQR(false);
-  setPaymentPending(true);
-};
-
-  // Локально активируем подписку и показываем понятное сообщение
-  localStorage.setItem('isSubscribed', 'true');
-  setIsSubscribed(true);
-  setShowQR(false);
-
-  // Красивое подтверждение на сайте
-  alert("Оплата получена! Подписка активирована 🎉");
-
-  // Возвращаем на главную
-  window.location.href = '/';
+  setPaymentPending(true); // (если у тебя есть это состояние)
 };
 
   const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
