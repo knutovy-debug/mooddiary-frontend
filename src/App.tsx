@@ -20,7 +20,7 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(localStorage.getItem('isSubscribed') === 'true');
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
-  const [paymentPending, setPaymentPending] = useState(false);
+  const [paymentPending, setPaymentPending] = useState(false); // Добавили состояние
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -57,32 +57,29 @@ function App() {
     finally { setLoading(false); }
   };
 
+  // Функция оплаты (ТВОЯ, с ручным подтверждением)
   const handlePaymentConfirmation = async () => {
-  let userId = null;
-  try {
-    const response = await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    // Достаем ID пользователя из ответа сервера
-    userId = response.data.user_id;
-  } catch (error) {
-    console.error("Ошибка запроса на подтверждение:", error);
-  }
+    let userId = null;
+    try {
+      const response = await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      userId = response.data.user_id;
+    } catch (error) {
+      console.error("Ошибка запроса на подтверждение:", error);
+    }
 
-  // Показываем окошко с ID и секретной ссылкой для активации
-  alert(`Запрос отправлен!\n\nID пользователя: ${userId}\n\nСкопируйте и вставьте в браузер эту ссылку, чтобы подтвердить оплату:\n${API_URL}/api/v1/entries/admin/activate/${userId}?secret=ADMIN_SECRET_123`);
+    alert(`Запрос отправлен!\n\nID пользователя: ${userId}\n\nСкопируйте и вставьте в браузер эту ссылку, чтобы подтвердить оплату:\n${API_URL}/api/v1/entries/admin/activate/${userId}?secret=ADMIN_SECRET_123`);
 
-  // Скрываем QR-код и ждём подтверждения
-  setShowQR(false);
-  setPaymentPending(true); // (если у тебя есть это состояние)
-};
+    setShowQR(false);
+    setPaymentPending(true);
+  };
 
   const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100">
       <BrowserRouter>
-        {/* Навигация */}
         <nav className="sticky top-0 z-10 bg-white/70 backdrop-blur-lg border-b border-white/40 shadow-sm">
           <div className="max-w-4xl mx-auto p-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -101,7 +98,6 @@ function App() {
 
         <div className="max-w-4xl mx-auto p-6">
           {!token ? (
-            // Экран входа
             <div className="mt-10 bg-white/60 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-8">
               <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">{isLogin ? 'С возвращением!' : 'Создать аккаунт'}</h2>
               {error && <p className="text-red-500 mb-4 text-center">⚠️ {error}</p>}
@@ -120,7 +116,6 @@ function App() {
               </div>
             </div>
           ) : (
-            // Дашборд
             <div>
               <div className="flex gap-4 mb-6">
                 <Link to="/" className="flex-1 bg-white/60 backdrop-blur-lg rounded-2xl p-4 text-center font-semibold text-gray-700 shadow-sm hover:bg-white">📝 Запись</Link>
@@ -131,7 +126,15 @@ function App() {
               <Routes>
                 <Route path="/" element={
                   <div>
-                    {showQR && !isSubscribed && (
+                    {paymentPending ? (
+                      <div className="mt-6 border border-blue-300 rounded-lg p-4 bg-blue-50 text-center">
+                        <h3 className="text-lg font-bold text-blue-700 mb-2">Заявка отправлена!</h3>
+                        <p className="text-sm text-gray-600">
+                          Мы получили запрос на оплату. Пожалуйста, подождите, пока администратор проверит перевод.
+                          Доступ откроется автоматически после подтверждения.
+                        </p>
+                      </div>
+                    ) : showQR && !isSubscribed ? (
                       <div className="mt-6 bg-white/70 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-6 text-center">
                         <h3 className="text-xl font-bold mb-2">Лимит исчерпан</h3>
                         <p className="text-gray-600 mb-4">Вы использовали 3 бесплатные записи. Продолжайте с подпиской!</p>
@@ -142,9 +145,7 @@ function App() {
                           ✅ Я оплатил
                         </button>
                       </div>
-                    )}
-
-                    {!showQR && (
+                    ) : (
                       <div className="mt-6 bg-white/70 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-6">
                         <h2 className="text-2xl font-bold mb-4 text-gray-800">Как прошёл твой день?</h2>
                         <textarea value={text} onChange={(e) => setText(e.target.value)} 
@@ -175,15 +176,5 @@ function App() {
     </div>
   );
 }
-{paymentPending ? (
-  <div className="mt-6 border border-blue-300 rounded-lg p-4 bg-blue-50 text-center">
-    <h3 className="text-lg font-bold text-blue-700 mb-2">Заявка отправлена!</h3>
-    <p className="text-sm text-gray-600">
-      Мы получили запрос на оплату. Пожалуйста, подождите, пока администратор проверит перевод. 
-      Доступ откроется автоматически после подтверждения.
-    </p>
-  </div>
-) : (
-  // ...твой старый блок с формой записи...
-)}
+
 export default App;
