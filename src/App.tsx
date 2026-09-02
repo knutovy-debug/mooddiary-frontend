@@ -59,21 +59,19 @@ function App() {
 
   // Функция оплаты (ТВОЯ, с ручным подтверждением)
   const handlePaymentConfirmation = async () => {
-    let userId = null;
-    try {
-      const response = await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      userId = response.data.user_id;
-    } catch (error) {
-      console.error("Ошибка запроса на подтверждение:", error);
-    }
+  try {
+    // Отправляем запрос на бэкенд, чтобы он уведомил ТЕБЯ в Telegram
+    await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch (error) {
+    console.error("Ошибка запроса на подтверждение:", error);
+  }
 
-    alert(`Запрос отправлен!\n\nID пользователя: ${userId}\n\nСкопируйте и вставьте в браузер эту ссылку, чтобы подтвердить оплату:\n${API_URL}/api/v1/entries/admin/activate/${userId}?secret=ADMIN_SECRET_123`);
-
-    setShowQR(false);
-    setPaymentPending(true);
-  };
+  // Просто скрываем QR и показываем статус ожидания
+  setShowQR(false);
+  setPaymentPending(true);
+};
 
   const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
 
