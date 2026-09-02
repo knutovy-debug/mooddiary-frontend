@@ -1,103 +1,47 @@
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  BarChart, Bar, ResponsiveContainer
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
 
-interface StatsData {
-  dates: string[];
-  sentiments: number[];
-  stress: number[];
-  topics: Record<string, number>;
-}
-
 function Stats() {
-  const { t } = useTranslation();
-  const [data, setData] = useState<StatsData | null>(null);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       const token = localStorage.getItem('token');
-      if (!token) {
-        setError(t('unauthorized') || 'Вы не авторизованы');
-        setLoading(false);
-        return;
-      }
       try {
-        const response = await axios.get(`${API_URL}/api/v1/entries/stats`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setData(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || t('error_loading') || 'Ошибка загрузки статистики');
+        const response = await axios.get(`${API_URL}/api/v1/entries/stats`, { headers: { Authorization: `Bearer ${token}` } });
+        const formatted = response.data.dates.map((date: string, index: number) => ({
+          date: new Date(date).toLocaleDateString(),
+          stress: response.data.stress_levels[index]
+        }));
+        setData(formatted);
+      } catch (error) {
+        console.error("Ошибка загрузки статистики", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
-  }, [t]);
-
-  if (loading) return <div className="text-center p-6 text-amber-700">⏳ {t('loading_stats')}...</div>;
-  if (error) return <div className="text-center text-red-500 p-6">{error}</div>;
-  if (!data || data.dates.length === 0) return <div className="text-center p-6 text-amber-700">📊 {t('no_data')}</div>;
-
-  const chartData = data.dates.map((date, index) => ({
-    date,
-    sentiment: data.sentiments[index],
-    stress: data.stress[index],
-  }));
-
-  const topTopics = Object.entries(data.topics)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+    fetchData();
+  }, []);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-amber-800 mb-4">📊 {t('stats_title')}</h2>
-
-      <div className="glass-card p-4 rounded-2xl shadow-md mb-6">
-        <h3 className="text-lg font-semibold text-amber-800 mb-2">📈 {t('mood_chart')}</h3>
+    <div className="bg-white/70 backdrop-blur-lg border border-white/40 rounded-2xl p-6 shadow-md">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">📊 Динамика стресса</h2>
+      {loading && <p>Загрузка...</p>}
+      {data.length === 0 && !loading && <p className="text-gray-500">Пока нет данных для графика.</p>}
+      {data.length > 0 && (
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5d5c0" />
-            <XAxis dataKey="date" stroke="#a67c5b" />
-            <YAxis stroke="#a67c5b" />
-            <Tooltip contentStyle={{ background: '#fdf6f0', border: '1px solid #e5d5c0' }} />
-            <Legend />
-            <Line type="monotone" dataKey="sentiment" stroke="#8B5CF6" name={t('mood_label')} strokeWidth={2} />
-            <Line type="monotone" dataKey="stress" stroke="#F97316" name={t('stress_label')} strokeWidth={2} />
+          <LineChart data={data}>
+            <XAxis dataKey="date" stroke="#8884d8" />
+            <YAxis domain={[0, 10]} stroke="#8884d8" />
+            <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+            <Line type="monotone" dataKey="stress" stroke="#f43f5e" strokeWidth={3} dot={{ r: 5, fill: '#f43f5e' }} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="glass-card p-4 rounded-2xl shadow-md mb-6">
-        <h3 className="text-lg font-semibold text-amber-800 mb-2">📊 {t('stress_chart')}</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5d5c0" />
-            <XAxis dataKey="date" stroke="#a67c5b" />
-            <YAxis stroke="#a67c5b" />
-            <Tooltip contentStyle={{ background: '#fdf6f0', border: '1px solid #e5d5c0' }} />
-            <Legend />
-            <Bar dataKey="stress" fill="#F97316" name={t('stress_label')} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="glass-card p-4 rounded-2xl shadow-md">
-        <h3 className="text-lg font-semibold text-amber-800 mb-2">🏷️ {t('topics_freq')}</h3>
-        <ul className="list-disc pl-5 text-amber-800">
-          {topTopics.map(([topic, count]) => (
-            <li key={topic}>{topic}: {count} {t('times')}</li>
-          ))}
-        </ul>
-      </div>
+      )}
     </div>
   );
 }
