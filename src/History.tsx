@@ -1,72 +1,43 @@
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
 
-interface Entry {
-  id: number;
-  text: string;
-  sentiment: string;
-  stress_level: number;
-  topics: string;
-  recommendation: string;
-  created_at: string;
-}
-
 function History() {
-  const { t } = useTranslation();
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchEntries = async () => {
+    const fetchData = async () => {
       const token = localStorage.getItem('token');
-      if (!token) {
-        setError(t('unauthorized') || 'Вы не авторизованы');
-        setLoading(false);
-        return;
-      }
       try {
-        const response = await axios.get(`${API_URL}/api/v1/entries/my`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(`${API_URL}/api/v1/entries/my`, { headers: { Authorization: `Bearer ${token}` } });
         setEntries(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || t('error_loading') || 'Ошибка загрузки');
+      } catch (error) {
+        console.error("Ошибка загрузки истории", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchEntries();
-  }, [t]);
-
-  if (loading) return <div className="text-center p-6 text-amber-700">⏳ {t('loading')}...</div>;
-  if (error) return <div className="text-center text-red-500 p-6">{error}</div>;
-  if (entries.length === 0) return <div className="text-center p-6 text-amber-700">📭 {t('no_entries')}</div>;
+    fetchData();
+  }, []);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold text-amber-800 mb-4">📜 {t('my_entries')}</h2>
-      <div className="space-y-4">
-        {entries.map((entry) => (
-          <div key={entry.id} className="glass-card p-4 rounded-2xl shadow-md animate-softFadeIn">
-            <div className="flex justify-between items-start">
-              <p className="text-amber-900 whitespace-pre-wrap">{entry.text}</p>
-              <span className="text-sm text-amber-500/70 ml-4 whitespace-nowrap">
-                {new Date(entry.created_at).toLocaleString()}
-              </span>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <span className="px-3 py-1 bg-blue-100/70 text-blue-700 rounded-full text-xs">😊 {t('mood')}: {entry.sentiment}</span>
-              <span className="px-3 py-1 bg-red-100/70 text-red-700 rounded-full text-xs">📊 {t('stress')}: {entry.stress_level}/10</span>
-              <span className="px-3 py-1 bg-green-100/70 text-green-700 rounded-full text-xs">🏷️ {t('topics')}: {entry.topics || '—'}</span>
-            </div>
-            <p className="mt-2 text-sm text-amber-700/70">💡 {t('advice')}: {entry.recommendation}</p>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold text-gray-800">📜 История записей</h2>
+      {loading && <p>Загрузка...</p>}
+      {entries.map((entry) => (
+        <div key={entry.id} className="bg-white/70 backdrop-blur-lg border border-white/40 rounded-2xl p-4 shadow-md">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-500">{new Date(entry.created_at).toLocaleString()}</span>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Уровень стресса: {entry.stress_level}/10</span>
           </div>
-        ))}
-      </div>
+          <p className="text-gray-800 mb-3">{entry.text}</p>
+          <div className="text-sm">
+            <p className="font-semibold">Рекомендация: <span className="font-normal text-gray-600">{entry.recommendation}</span></p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
