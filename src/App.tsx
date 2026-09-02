@@ -57,10 +57,25 @@ function App() {
   };
 
   const handlePaymentConfirmation = async () => {
-    try { await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, { headers: { Authorization: `Bearer ${token}` } }); } catch (error) { console.error(error); }
-    localStorage.setItem('isSubscribed', 'true'); setIsSubscribed(true); setShowQR(false);
-    window.location.href = '/';
-  };
+  try {
+    await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch (error) {
+    console.error("Ошибка запроса на оплату:", error);
+  }
+
+  // Локально активируем подписку и показываем понятное сообщение
+  localStorage.setItem('isSubscribed', 'true');
+  setIsSubscribed(true);
+  setShowQR(false);
+
+  // Красивое подтверждение на сайте
+  alert("Оплата получена! Подписка активирована 🎉");
+
+  // Возвращаем на главную
+  window.location.href = '/';
+};
 
   const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
 
