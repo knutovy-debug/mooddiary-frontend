@@ -23,6 +23,7 @@ function App() {
   const [paymentPending, setPaymentPending] = useState(false); // Добавили состояние
 
   useEffect(() => {
+<<<<<<< HEAD
   const fetchAllData = async () => {
     if (!token) return;
     try {
@@ -52,6 +53,19 @@ function App() {
   };
   fetchAllData();
 }, [token]); // Перезапускаем при изменении токена
+=======
+    const fetchCount = async () => {
+      if (!token) return;
+      try {
+        const response = await axios.get(`${API_URL}/api/v1/entries/today-count`, { headers: { Authorization: `Bearer ${token}` } });
+        setEntriesToday(response.data.count);
+        if (response.data.count >= 3 && !isSubscribed) setShowQR(true);
+      } catch (err) { console.error(err); }
+    };
+    fetchCount();
+  }, [token, isSubscribed]);
+
+>>>>>>> 440bb59 (Полный финальный App.tsx)
   const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
 
   const handleLogin = async () => {
@@ -77,6 +91,7 @@ function App() {
 
   // Функция оплаты (ТВОЯ, с ручным подтверждением)
   const handlePaymentConfirmation = async () => {
+<<<<<<< HEAD
   try {
     // Отправляем запрос на бэкенд, чтобы он уведомил ТЕБЯ в Telegram
     await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
@@ -93,6 +108,26 @@ function App() {
 
   const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
 
+=======
+    let userId = null;
+    try {
+      const response = await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      userId = response.data.user_id;
+    } catch (error) {
+      console.error("Ошибка запроса на подтверждение:", error);
+    }
+
+    alert(`Запрос отправлен!\n\nID пользователя: ${userId}\n\nСкопируйте и вставьте в браузер эту ссылку, чтобы подтвердить оплату:\n${API_URL}/api/v1/entries/admin/activate/${userId}?secret=ADMIN_SECRET_123`);
+
+    setShowQR(false);
+    setPaymentPending(true);
+  };
+
+  const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
+
+>>>>>>> 440bb59 (Полный финальный App.tsx)
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100">
       <BrowserRouter>
