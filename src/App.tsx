@@ -5,7 +5,7 @@ import axios from 'axios';
 import History from './History';
 import Stats from './Stats';
 
-const API_URL = import.meta.env.VITE_API_URL || "https://web-production-e70f0c.up.railway.app";
+const API_URL = import.meta.env.VITE_API_URL || "https://web-production-7c06d.up.railway.app";
 
 function App() {
   const { i18n } = useTranslation();
@@ -20,52 +20,34 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(localStorage.getItem('isSubscribed') === 'true');
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
-  const [paymentPending, setPaymentPending] = useState(false); // Добавили состояние
+  const [paymentPending, setPaymentPending] = useState(false);
 
   useEffect(() => {
-<<<<<<< HEAD
-  const fetchAllData = async () => {
-    if (!token) return;
-    try {
-      // 1. Проверяем статус подписки (и синхронизируем с localStorage)
-      const subResponse = await axios.get(`${API_URL}/api/v1/subscription/status`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (subResponse.data.is_subscribed) {
-        localStorage.setItem('isSubscribed', 'true');
-        setIsSubscribed(true);
-        setShowQR(false);
-      }
-
-      // 2. Получаем количество записей за сегодня
-      const countResponse = await axios.get(`${API_URL}/api/v1/entries/today-count`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setEntriesToday(countResponse.data.count);
-
-      // 3. Показываем QR, если записей 3 и нет подписки
-      if (countResponse.data.count >= 3 && !subResponse.data.is_subscribed) {
-        setShowQR(true);
-      }
-    } catch (err) {
-      console.error("Ошибка загрузки данных:", err);
-    }
-  };
-  fetchAllData();
-}, [token]); // Перезапускаем при изменении токена
-=======
-    const fetchCount = async () => {
+    const fetchAllData = async () => {
       if (!token) return;
       try {
-        const response = await axios.get(`${API_URL}/api/v1/entries/today-count`, { headers: { Authorization: `Bearer ${token}` } });
-        setEntriesToday(response.data.count);
-        if (response.data.count >= 3 && !isSubscribed) setShowQR(true);
-      } catch (err) { console.error(err); }
+        const subResponse = await axios.get(`${API_URL}/api/v1/subscription/status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (subResponse.data.is_subscribed) {
+          localStorage.setItem('isSubscribed', 'true');
+          setIsSubscribed(true);
+          setShowQR(false);
+        }
+        const countResponse = await axios.get(`${API_URL}/api/v1/entries/today-count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setEntriesToday(countResponse.data.count);
+        if (countResponse.data.count >= 3 && !subResponse.data.is_subscribed) {
+          setShowQR(true);
+        }
+      } catch (err) {
+        console.error("Ошибка загрузки данных:", err);
+      }
     };
-    fetchCount();
-  }, [token, isSubscribed]);
+    fetchAllData();
+  }, [token]);
 
->>>>>>> 440bb59 (Полный финальный App.tsx)
   const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
 
   const handleLogin = async () => {
@@ -89,45 +71,18 @@ function App() {
     finally { setLoading(false); }
   };
 
-  // Функция оплаты (ТВОЯ, с ручным подтверждением)
   const handlePaymentConfirmation = async () => {
-<<<<<<< HEAD
-  try {
-    // Отправляем запрос на бэкенд, чтобы он уведомил ТЕБЯ в Telegram
-    await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  } catch (error) {
-    console.error("Ошибка запроса на подтверждение:", error);
-  }
-
-  // Просто скрываем QR и показываем статус ожидания
-  setShowQR(false);
-  setPaymentPending(true);
-};
-
-  const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
-
-=======
-    let userId = null;
     try {
-      const response = await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
+      await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      userId = response.data.user_id;
-    } catch (error) {
-      console.error("Ошибка запроса на подтверждение:", error);
-    }
-
-    alert(`Запрос отправлен!\n\nID пользователя: ${userId}\n\nСкопируйте и вставьте в браузер эту ссылку, чтобы подтвердить оплату:\n${API_URL}/api/v1/entries/admin/activate/${userId}?secret=ADMIN_SECRET_123`);
-
+    } catch (error) { console.error(error); }
     setShowQR(false);
     setPaymentPending(true);
   };
 
   const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('isSubscribed'); setToken(''); setIsSubscribed(false); window.location.href = '/'; };
 
->>>>>>> 440bb59 (Полный финальный App.tsx)
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100">
       <BrowserRouter>
@@ -153,11 +108,11 @@ function App() {
               <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">{isLogin ? 'С возвращением!' : 'Создать аккаунт'}</h2>
               {error && <p className="text-red-500 mb-4 text-center">⚠️ {error}</p>}
               <div className="space-y-4">
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} 
+                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-white/70 border border-gray-200 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} 
+                <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-white/70 border border-gray-200 p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                <button onClick={handleLogin} 
+                <button onClick={handleLogin}
                   className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-opacity">
                   {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
                 </button>
@@ -180,10 +135,7 @@ function App() {
                     {paymentPending ? (
                       <div className="mt-6 border border-blue-300 rounded-lg p-4 bg-blue-50 text-center">
                         <h3 className="text-lg font-bold text-blue-700 mb-2">Заявка отправлена!</h3>
-                        <p className="text-sm text-gray-600">
-                          Мы получили запрос на оплату. Пожалуйста, подождите, пока администратор проверит перевод.
-                          Доступ откроется автоматически после подтверждения.
-                        </p>
+                        <p className="text-sm text-gray-600">Мы получили запрос на оплату. Пожалуйста, подождите, пока администратор проверит перевод. Доступ откроется автоматически после подтверждения.</p>
                       </div>
                     ) : showQR && !isSubscribed ? (
                       <div className="mt-6 bg-white/70 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-6 text-center">
@@ -191,7 +143,7 @@ function App() {
                         <p className="text-gray-600 mb-4">Вы использовали 3 бесплатные записи. Продолжайте с подпиской!</p>
                         <img src="/qr-code.png" alt="QR-код для оплаты" className="w-48 h-48 mx-auto mb-4 rounded-xl" />
                         <p className="text-lg font-bold text-purple-700">299 ₽ / месяц</p>
-                        <button onClick={handlePaymentConfirmation} 
+                        <button onClick={handlePaymentConfirmation}
                           className="mt-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                           ✅ Я оплатил
                         </button>
@@ -199,14 +151,13 @@ function App() {
                     ) : (
                       <div className="mt-6 bg-white/70 backdrop-blur-lg border border-white/50 rounded-3xl shadow-xl p-6">
                         <h2 className="text-2xl font-bold mb-4 text-gray-800">Как прошёл твой день?</h2>
-                        <textarea value={text} onChange={(e) => setText(e.target.value)} 
-                          className="w-full bg-white border border-gray-200 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[150px]" 
+                        <textarea value={text} onChange={(e) => setText(e.target.value)}
+                          className="w-full bg-white border border-gray-200 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[150px]"
                           placeholder="Напишите, что вы чувствуете..." />
-                        <button onClick={handleSubmit} 
+                        <button onClick={handleSubmit}
                           className="mt-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                           Отправить на анализ ✨
                         </button>
-                        
                         {result && (
                           <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 border border-green-200">
                             <p className="font-bold text-green-800">Настроение: {result.sentiment}</p>
