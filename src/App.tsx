@@ -20,6 +20,7 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(localStorage.getItem('isSubscribed') === 'true');
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
+  const [paymentPending, setPaymentPending] = useState(false);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -62,8 +63,13 @@ function App() {
       headers: { Authorization: `Bearer ${token}` }
     });
   } catch (error) {
-    console.error("Ошибка запроса на оплату:", error);
+    console.error("Ошибка запроса на подтверждение:", error);
   }
+  
+  // НЕ активируем подписку! Просто скрываем QR и показываем "ожидание"
+  setShowQR(false);
+  setPaymentPending(true);
+};
 
   // Локально активируем подписку и показываем понятное сообщение
   localStorage.setItem('isSubscribed', 'true');
@@ -175,5 +181,15 @@ function App() {
     </div>
   );
 }
-
+{paymentPending ? (
+  <div className="mt-6 border border-blue-300 rounded-lg p-4 bg-blue-50 text-center">
+    <h3 className="text-lg font-bold text-blue-700 mb-2">Заявка отправлена!</h3>
+    <p className="text-sm text-gray-600">
+      Мы получили запрос на оплату. Пожалуйста, подождите, пока администратор проверит перевод. 
+      Доступ откроется автоматически после подтверждения.
+    </p>
+  </div>
+) : (
+  // ...твой старый блок с формой записи...
+)}
 export default App;
