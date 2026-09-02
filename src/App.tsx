@@ -21,11 +21,15 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // ЧИТАЕМ ПОДПИСКУ ИЗ LOCALSTORAGE (чтобы QR не появлялся после перезагрузки)
+  // ЛИМИТ И ПОДПИСКА
   const [isSubscribed, setIsSubscribed] = useState(localStorage.getItem('isSubscribed') === 'true');
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // ===== СМЕНА ЯЗЫКА =====
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   // ===== ПРИ ЗАГРУЗКЕ ПРОВЕРЯЕМ ЛИМИТ =====
   useEffect(() => {
@@ -41,18 +45,36 @@ function App() {
         if (response.data.count >= 3 && !isSubscribed) {
           setShowQR(true);
         }
-      } catch (error) {
-        console.error("Ошибка получения количества записей:", error);
+      } catch (err) {
+        console.error("Ошибка получения количества записей:", err);
       }
     };
     fetchCount();
   }, [token, isSubscribed]);
 
-  // ===== ФУНКЦИЯ ОТПРАВКИ ЗАПИСИ =====
+  // ===== ВХОД / РЕГИСТРАЦИЯ =====
+  const handleLogin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const url = isLogin ? '/auth/login' : '/auth/register';
+      const response = await axios.post(`${API_URL}/api/v1${url}`, {
+        email,
+        password
+      });
+      localStorage.setItem('token', response.data.access_token);
+      setToken(response.data.access_token);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Ошибка авторизации");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===== ОТПРАВКА ЗАПИСИ =====
   const handleSubmit = async () => {
-    // Проверка лимита перед отправкой
     if (entriesToday >= 3 && !isSubscribed) {
-      setShowQR(true);
+      setShowQR(true); // Показываем QR, если лимит исчерпан
       return;
     }
 
@@ -75,35 +97,36 @@ function App() {
     }
   };
 
-  // ===== КНОПКА "Я ОПЛАТИЛ" (РАБОЧАЯ ВЕРСИЯ) =====
+  // ===== КНОПКА "Я ОПЛАТИЛ" =====
   const handlePaymentConfirmation = async () => {
     try {
-      // Отправляем запрос на бэкенд (если он упадет, мы не сломаемся)
+      // Отправляем запрос на бэкенд, чтобы он уведомил тебя в Telegram
       await axios.post(`${API_URL}/api/v1/entries/confirm-payment`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (error) {
-      console.error("Ошибка отправки запроса на подтверждение:", error);
+      console.error("Ошибка отправки запроса (возможно, Railway блокирует Telegram):", error);
     }
 
-    // 1. Показываем сообщение
-    alert("Запрос на подтверждение отправлен!");
-
-    // 2. ЛОКАЛЬНО АКТИВИРУЕМ ПОДПИСКУ, чтобы QR исчез и не мешал
+    // Локально активируем подписку, чтобы QR исчез
     localStorage.setItem('isSubscribed', 'true');
     setIsSubscribed(true);
     setShowQR(false);
 
-    // 3. ПЕРЕКИДЫВАЕМ НА ГЛАВНУЮ (перезагружаем страницу)
+    // Возвращаем на главную (перезагрузка страницы)
     window.location.href = '/';
   };
 
   // ===== ВЫХОД =====
-  const changeLanguage = (lng: string) => {
-  i18n.changeLanguage(lng);
-};
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('isSubscribed');
+    setToken('');
+    setIsSubscribed(false);
+    window.location.href = '/';
+  };
 
-  // ===== РЕНДЕР (ЭКРАНЫ) =====
+  // ===== РЕНДЕР =====
   return (
     <BrowserRouter>
       <nav className="flex justify-between items-center p-4 bg-white shadow-md">
@@ -112,9 +135,11 @@ function App() {
           <button onClick={() => changeLanguage('en')} className="text-sm">EN</button>
         </div>
         <div>
-          <button onClick={logout} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition">
-            {t('logout')}
-          </button>
+          {token && (
+            <button onClick={logout} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition">
+              Выйти
+            </button>
+          )}
         </div>
       </nav>
 
@@ -123,10 +148,11 @@ function App() {
           // ЭКРАН ВХОДА / РЕГИСТРАЦИИ
           <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl p-8 border border-white/40">
             <h1 className="text-3xl font-bold mb-4">{isLogin ? 'Войти' : 'Зарегистрироваться'}</h1>
+            {error && <p className="text-red-500 mb-2">{error}</p>}
             <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border p-2 rounded mb-2" />
             <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border p-2 rounded mb-2" />
             <button onClick={handleLogin} className="w-full bg-blue-500 text-white p-2 rounded mt-2">
-              {isLogin ? 'Войти' : 'Зарегистрироваться'}
+              {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
             </button>
             <p onClick={() => setIsLogin(!isLogin)} className="text-blue-500 cursor-pointer mt-2">
               {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
