@@ -23,17 +23,35 @@ function App() {
   const [paymentPending, setPaymentPending] = useState(false); // Добавили состояние
 
   useEffect(() => {
-    const fetchCount = async () => {
-      if (!token) return;
-      try {
-        const response = await axios.get(`${API_URL}/api/v1/entries/today-count`, { headers: { Authorization: `Bearer ${token}` } });
-        setEntriesToday(response.data.count);
-        if (response.data.count >= 3 && !isSubscribed) setShowQR(true);
-      } catch (err) { console.error(err); }
-    };
-    fetchCount();
-  }, [token, isSubscribed]);
+  const fetchAllData = async () => {
+    if (!token) return;
+    try {
+      // 1. Проверяем статус подписки (и синхронизируем с localStorage)
+      const subResponse = await axios.get(`${API_URL}/api/v1/subscription/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (subResponse.data.is_subscribed) {
+        localStorage.setItem('isSubscribed', 'true');
+        setIsSubscribed(true);
+        setShowQR(false);
+      }
 
+      // 2. Получаем количество записей за сегодня
+      const countResponse = await axios.get(`${API_URL}/api/v1/entries/today-count`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEntriesToday(countResponse.data.count);
+
+      // 3. Показываем QR, если записей 3 и нет подписки
+      if (countResponse.data.count >= 3 && !subResponse.data.is_subscribed) {
+        setShowQR(true);
+      }
+    } catch (err) {
+      console.error("Ошибка загрузки данных:", err);
+    }
+  };
+  fetchAllData();
+}, [token]); // Перезапускаем при изменении токена
   const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
 
   const handleLogin = async () => {
