@@ -21,6 +21,7 @@ function App() {
   const [entriesToday, setEntriesToday] = useState(0);
   const [showQR, setShowQR] = useState(false);
   const [paymentPending, setPaymentPending] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -59,6 +60,28 @@ function App() {
       setToken(response.data.access_token);
     } catch (err: any) { setError(err.response?.data?.detail || "Ошибка авторизации"); }
     finally { setLoading(false); }
+  };
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Ваш браузер не поддерживает голосовой ввод. Откройте в Chrome или Яндекс.Браузере.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => setIsRecording(false);
+    recognition.onerror = () => setIsRecording(false);
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setText(prev => prev ? prev + " " + transcript : transcript);
+    };
+
+    recognition.start();
   };
 
   const handleSubmit = async () => {
@@ -145,7 +168,12 @@ function App() {
                     ) : (
                       <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '24px', padding: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
                         <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '16px', color: '#333' }}>Как прошёл твой день?</h2>
-                        <textarea value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #ddd', minHeight: '150px', fontSize: '16px', boxSizing: 'border-box' }} placeholder="Напишите, что вы чувствуете..." />
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <textarea value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #ddd', minHeight: '150px', fontSize: '16px', boxSizing: 'border-box' }} placeholder="Напишите, что вы чувствуете..." />
+                          <button onClick={handleVoiceInput} style={isRecording ? { background: '#f87171', color: 'white', padding: '16px', borderRadius: '50%', border: 'none', fontSize: '20px', cursor: 'pointer', minWidth: '56px', height: '56px' } : { background: '#a5b4fc', color: 'white', padding: '16px', borderRadius: '50%', border: 'none', fontSize: '20px', cursor: 'pointer', minWidth: '56px', height: '56px' }}>
+                            {isRecording ? "🔴" : "🎤"}
+                          </button>
+                        </div>
                         <button onClick={handleSubmit} style={{ marginTop: '16px', background: 'linear-gradient(90deg, #fdba74, #fcd34d)', color: '#333', padding: '12px 24px', borderRadius: '50px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
                           {loading ? 'Анализ...' : 'Отправить на анализ ✨'}
                         </button>
